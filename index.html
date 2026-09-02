@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PDF Merge &amp; Blank Page Remover</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<style>
+  :root {
+    --bg: #faf9f7; --ink: #1f1d1a; --muted: #6b6559;
+    --accent: #a3612f; --accent-dark: #7d4820; --line: #e2ddd3;
+    --ok: #3c7a4e; --warn: #b23b2e;
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif; background:var(--bg); color:var(--ink); padding:32px 24px 100px; }
+  .wrap { max-width: 1000px; margin:0 auto; }
+  h1 { font-size:22px; margin:0 0 4px; }
+  .sub { color:var(--muted); font-size:14px; margin-bottom:24px; }
+  .card { background:white; border:1px solid var(--line); border-radius:10px; padding:20px 24px; margin-bottom:20px; }
+  .card h2 { font-size:15px; margin:0 0 10px; }
+  button {
+    background:var(--accent); color:white; border:none; border-radius:6px;
+    padding:9px 16px; font-size:14px; cursor:pointer;
+  }
+  button:hover { background:var(--accent-dark); }
+  button:disabled { background:#cabfaf; cursor:default; }
+  button.secondary { background:white; color:var(--accent-dark); border:1px solid var(--accent); }
+  button.secondary:hover { background:#f5ede4; }
+  #progress { font-size:13px; color:var(--muted); margin-top:12px; min-height:18px; }
+  .filelist { list-style:none; padding:0; margin:10px 0; }
+  .filelist li { display:flex; align-items:center; gap:8px; padding:6px 0; font-size:13px; border-bottom:1px solid var(--line); }
+  .filelist li .name { flex:1; }
+  .filelist button.mini { padding:3px 8px; font-size:12px; }
+  .grid {
+    display:grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap:14px; margin-top:16px;
+  }
+  .thumb {
+    border:2px solid var(--line); border-radius:8px; overflow:hidden;
+    cursor:pointer; position:relative; background:#fff; transition:border-color .15s;
+  }
+  .thumb.blank { border-color: var(--warn); opacity: 0.55; }
+  .thumb.kept { border-color: var(--ok); }
+  .thumb canvas { display:block; width:100%; height:auto; }
+  .thumb .label {
+    font-size:11px; text-align:center; padding:4px 2px; color:var(--muted);
+    background:#f4f1ec; border-top:1px solid var(--line);
+  }
+  .thumb.blank .label { color: var(--warn); font-weight:600; }
+  .thumb .src { font-size:10px; color:#999; text-align:center; }
+  #summary { font-size:14px; margin: 4px 0 14px; }
+  #summary b { font-size:16px; }
+  .footer-note { font-size:12px; color:var(--muted); margin-top:8px; }
+  .actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>PDF Merge &amp; Blank Page Remover</h1>
+  <div class="sub">Runs entirely in your browser — nothing installed, nothing uploaded anywhere.</div>
+
+  <div class="card">
+    <h2>1. Choose PDFs to merge (in the order you pick them)</h2>
+    <input type="file" id="fileInput" multiple accept="application/pdf">
+    <ul class="filelist" id="fileList"></ul>
+    <div class="actions">
+      <button id="loadBtn" disabled>Load &amp; scan for blank pages</button>
+    </div>
+    <div id="progress"></div>
+  </div>
+
+  <div class="card" id="resultsCard" style="display:none">
+    <h2>2. Review pages</h2>
+    <div id="summary"></div>
+    <div class="footer-note">
+      Pages outlined in red were detected as blank and are unchecked by default. Click any page to toggle it — you're always in control before the final file is made.
+    </div>
+    <div class="grid" id="grid"></div>
+    <div class="actions" style="margin-top:20px">
+      <button id="mergeBtn">Merge kept pages &amp; download</button>
+      <span id="mergeStatus" style="font-size:13px;color:var(--muted)"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+const BLANK_STD_THRESHOLD = 3; // pixel-intensity std dev below this = treated as blank
+
+let selectedFiles = []; // {file}
+let pageEntries = [];   // {fileIndex, pageIndexInFile, fileName, bytes(ref), isBlank, keep, thumbCanvas}
+
+const fileInput = document.getElementById("fileInput");
+const fileListEl = document.getElementById("fileList");
+const loadBtn = document.getElementById("loadBtn");
+const progressEl = document.getElementById("progress");
+const resultsCard = document.getElementById("resultsCard");
+const gridEl = document.getElementById("grid");
+const summaryEl = document.getElementById("summary");
+const mergeBtn = document.getElementById("mergeBtn");
+const mergeStatus = document.getElementById("mergeStatus");
+
+fileInput.addEventListener("change", () => {
+  selectedFiles = Array.from(fileInput.files).map(f => ({ file: f }));
+  renderFileList();
+  loadBtn.disabled = selectedFiles.length === 0;
+});
+
+function renderFileList() {
+  fileListEl.innerHTML = "";
+  selectedFiles.forEach((entry, idx) => {
+    const li = document.createElement("li");
+    li.innerHTML = `
+      <span class="name">${idx + 1}. ${entry.file.name}</span>
+      <button class="mini secondary" data-up="${idx}">↑</button>
+      <button class="mini secondary" data-down="${idx}">↓</button>
+      <button class="mini secondary" data-remove="${idx}">✕</button>
+    `;
+    fileListEl.appendChild(li);
+  });
+  fileListEl.querySelectorAll("[data-up]").forEach(b => b.onclick = () => move(+b.dataset.up, -1));
+  fileListEl.querySelectorAll("[data-down]").forEach(b => b.onclick = () => move(+b.dataset.down, 1));
+  fileListEl.querySelectorAll("[data-remove]").forEach(b => b.onclick = () => {
+    selectedFiles.splice(+b.dataset.remove, 1);
+    renderFileList();
+    loadBtn.disabled = selectedFiles.length === 0;
+  });
+}
+
+function move(idx, dir) {
+  const j = idx + dir;
+  if (j < 0 || j >= selectedFiles.length) return;
+  [selectedFiles[idx], selectedFiles[j]] = [selectedFiles[j], selectedFiles[idx]];
+  renderFileList();
+}
+
+function computeBlankStd(canvas) {
+  const ctx = canvas.getContext("2d");
+  const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  let n = 0, sum = 0;
+  // grayscale approx, subsample every 4th pixel for speed
+  for (let i = 0; i < data.length; i += 16) {
+    const g = (data[i] + data[i + 1] + data[i + 2]) / 3;
+    sum += g;
+    n++;
+  }
+  const mean = sum / n;
+  let variance = 0;
+  for (let i = 0; i < data.length; i += 16) {
+    const g = (data[i] + data[i + 1] + data[i + 2]) / 3;
+    variance += (g - mean) * (g - mean);
+  }
+  variance /= n;
+  return Math.sqrt(variance);
+}
+
+loadBtn.addEventListener("click", async () => {
+  pageEntries = [];
+  gridEl.innerHTML = "";
+  resultsCard.style.display = "block";
+  loadBtn.disabled = true;
+
+  for (let fi = 0; fi < selectedFiles.length; fi++) {
+    const file = selectedFiles[fi].file;
+    progressEl.textContent = `Loading ${fi + 1}/${selectedFiles.length}: ${file.name}`;
+    const buf = await file.arrayBuffer();
+    selectedFiles[fi].bytes = buf.slice(0); // keep a copy for pdf-lib later
+    const doc = await pdfjsLib.getDocument({ data: buf.slice(0) }).promise;
+
+    for (let p = 1; p <= doc.numPages; p++) {
+      progressEl.textContent = `Scanning ${file.name} — page ${p}/${doc.numPages}`;
+      const page = await doc.getPage(p);
+      const vp = page.getViewport({ scale: 0.3 });
+      const canvas = document.createElement("canvas");
+      canvas.width = vp.width;
+      canvas.height = vp.height;
+      await page.render({ canvasContext: canvas.getContext("2d"), viewport: vp }).promise;
+      const std = computeBlankStd(canvas);
+      const isBlank = std < BLANK_STD_THRESHOLD;
+      pageEntries.push({
+        fileIndex: fi,
+        fileName: file.name,
+        pageIndexInFile: p - 1, // 0-based for pdf-lib
+        isBlank,
+        keep: !isBlank,
+        thumbCanvas: canvas,
+      });
+    }
+  }
+
+  progressEl.textContent = `Done. Scanned ${pageEntries.length} pages across ${selectedFiles.length} file(s).`;
+  renderGrid();
+});
+
+function renderGrid() {
+  gridEl.innerHTML = "";
+  pageEntries.forEach((entry, idx) => {
+    const div = document.createElement("div");
+    div.className = "thumb " + (entry.isBlank ? "blank" : "kept");
+    div.appendChild(entry.thumbCanvas);
+    const label = document.createElement("div");
+    label.className = "label";
+    label.textContent = entry.isBlank ? "blank — excluded" : "kept";
+    div.appendChild(label);
+    const src = document.createElement("div");
+    src.className = "src";
+    src.textContent = `${entry.fileName} · p.${entry.pageIndexInFile + 1}`;
+    div.appendChild(src);
+
+    div.addEventListener("click", () => {
+      entry.keep = !entry.keep;
+      div.className = "thumb " + (entry.keep ? "kept" : "blank");
+      label.textContent = entry.keep ? "kept" : "excluded";
+      label.style.color = entry.keep ? "" : "";
+      updateSummary();
+    });
+
+    gridEl.appendChild(div);
+  });
+  updateSummary();
+}
+
+function updateSummary() {
+  const total = pageEntries.length;
+  const kept = pageEntries.filter(e => e.keep).length;
+  summaryEl.innerHTML = `<b>${kept}</b> of <b>${total}</b> pages will be kept in the merged file.`;
+}
+
+mergeBtn.addEventListener("click", async () => {
+  mergeStatus.textContent = "Building merged PDF...";
+  mergeBtn.disabled = true;
+  try {
+    const { PDFDocument } = PDFLib;
+    const outDoc = await PDFDocument.create();
+
+    // Load each source doc once with pdf-lib
+    const srcDocs = [];
+    for (const entry of selectedFiles) {
+      const pdfLibDoc = await PDFDocument.load(entry.bytes.slice(0));
+      srcDocs.push(pdfLibDoc);
+    }
+
+    const toKeep = pageEntries.filter(e => e.keep);
+    for (let i = 0; i < toKeep.length; i++) {
+      const e = toKeep[i];
+      mergeStatus.textContent = `Copying page ${i + 1}/${toKeep.length}...`;
+      const [copiedPage] = await outDoc.copyPages(srcDocs[e.fileIndex], [e.pageIndexInFile]);
+      outDoc.addPage(copiedPage);
+    }
+
+    const outBytes = await outDoc.save();
+    const blob = new Blob([outBytes], { type: "application/pdf" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "merged_cleaned.pdf";
+    a.click();
+    mergeStatus.textContent = `Done — downloaded merged_cleaned.pdf (${toKeep.length} pages).`;
+  } catch (e) {
+    mergeStatus.textContent = "Error: " + e.message;
+  }
+  mergeBtn.disabled = false;
+});
+</script>
+</body>
+</html>
