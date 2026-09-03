@@ -8,196 +8,303 @@
 
 <style>
   :root {
-    --bg: #faf9f7; --ink: #1f1d1a; --muted: #6b6559;
-    --accent: #f540b0; --accent-dark: #55408f; --line: #e2ddd3;
-    --ok: #3c7a4e; --warn: #b23b2e;
+    --bg: #f6f5f2;
+    --surface: #ffffff;
+    --ink: #1c1b1a;
+    --muted: #767066;
+    --muted-soft: #9c968b;
+    --line: #e8e4dc;
+    --line-soft: #f0ede6;
+
+    --accent: #d94f8c;
+    --accent-hover: #c23e79;
+    --accent-soft: #fbe9f1;
+    --accent-ring: rgba(217, 79, 140, 0.18);
+
+    --ok: #2f8f5b;
+    --ok-soft: #e7f5ec;
+    --warn: #c2483a;
+    --warn-soft: #fbeae7;
+
+    --radius-lg: 14px;
+    --radius-md: 10px;
+    --radius-sm: 7px;
+
+    --shadow-card: 0 1px 2px rgba(28, 27, 26, 0.04), 0 4px 16px rgba(28, 27, 26, 0.03);
   }
 
   * { box-sizing: border-box; }
 
   body {
-    margin:0;
-    font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
-    background:var(--bg);
-    color:var(--ink);
-    padding:32px 24px 100px;
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    padding: 40px 24px 120px;
+    -webkit-font-smoothing: antialiased;
   }
 
   .wrap {
-    max-width: 1000px;
-    margin:0 auto;
+    max-width: 960px;
+    margin: 0 auto;
   }
 
   h1 {
-    font-size:22px;
-    margin:0 0 4px;
+    font-size: 24px;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+    margin: 0 0 6px;
   }
 
   .sub {
-    color:var(--muted);
-    font-size:14px;
-    margin-bottom:24px;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 28px;
+    max-width: 60ch;
   }
 
   .card {
-    background:white;
-    border:1px solid var(--line);
-    border-radius:10px;
-    padding:20px 24px;
-    margin-bottom:20px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    padding: 24px 28px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-card);
   }
 
   .card h2 {
-    font-size:15px;
-    margin:0 0 10px;
+    font-size: 15px;
+    font-weight: 650;
+    margin: 0 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent-hover);
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
   }
 
   .instructions {
-    color:var(--muted);
-    font-size:13px;
-    line-height:1.6;
-    margin:0;
+    color: var(--muted);
+    font-size: 13.5px;
+    line-height: 1.7;
+    margin: 0;
   }
 
   .instructions ol {
-    margin:8px 0 0;
-    padding-left:20px;
+    margin: 10px 0 0;
+    padding-left: 20px;
+  }
+
+  .instructions li {
+    margin-bottom: 4px;
   }
 
   button {
-    background:var(--accent);
-    color:white;
-    border:none;
-    border-radius:6px;
-    padding:9px 16px;
-    font-size:14px;
-    cursor:pointer;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 10px 18px;
+    font-size: 14px;
+    font-weight: 550;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.05s ease, box-shadow 0.15s ease;
   }
 
-  button:hover {
-    background:var(--accent-dark);
+  button:hover:not(:disabled) {
+    background: var(--accent-hover);
+  }
+
+  button:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+
+  button:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--accent-ring);
   }
 
   button:disabled {
-    background:#cabfaf;
-    cursor:default;
+    background: var(--line);
+    color: var(--muted-soft);
+    cursor: default;
   }
 
   button.secondary {
-    background:white;
-    color:var(--accent-dark);
-    border:1px solid var(--accent);
+    background: var(--surface);
+    color: var(--accent-hover);
+    border: 1px solid var(--line);
   }
 
-  button.secondary:hover {
-    background:#f5ede4;
+  button.secondary:hover:not(:disabled) {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+  }
+
+  input[type="file"] {
+    font-size: 13.5px;
+    color: var(--muted);
+    padding: 10px 0;
   }
 
   #progress {
-    font-size:13px;
-    color:var(--muted);
-    margin-top:12px;
-    min-height:18px;
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 14px;
+    min-height: 18px;
   }
 
   .filelist {
-    list-style:none;
-    padding:0;
-    margin:10px 0;
+    list-style: none;
+    padding: 0;
+    margin: 14px 0 4px;
+    border-top: 1px solid var(--line-soft);
   }
 
   .filelist li {
-    display:flex;
-    align-items:center;
-    gap:8px;
-    padding:6px 0;
-    font-size:13px;
-    border-bottom:1px solid var(--line);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 0;
+    font-size: 13.5px;
+    border-bottom: 1px solid var(--line-soft);
   }
 
   .filelist li .name {
-    flex:1;
+    flex: 1;
+    color: var(--ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .filelist button.mini {
-    padding:3px 8px;
-    font-size:12px;
+    padding: 4px 9px;
+    font-size: 12px;
+    line-height: 1;
   }
 
   .grid {
-    display:grid;
-    grid-template-columns:repeat(auto-fill, minmax(120px, 1fr));
-    gap:14px;
-    margin-top:16px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+    gap: 16px;
+    margin-top: 18px;
   }
 
   .thumb {
-    border:2px solid var(--line);
-    border-radius:8px;
-    overflow:hidden;
-    cursor:pointer;
-    position:relative;
-    background:#fff;
-    transition:border-color .15s;
+    border: 2px solid var(--line);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+    background: var(--surface);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.08s ease;
+  }
+
+  .thumb:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(28, 27, 26, 0.08);
   }
 
   .thumb.blank {
-    border-color:var(--warn);
-    opacity:0.55;
+    border-color: var(--warn);
+    background: var(--warn-soft);
+  }
+
+  .thumb.blank canvas {
+    opacity: 0.5;
   }
 
   .thumb.kept {
-    border-color:var(--ok);
+    border-color: var(--ok);
   }
 
   .thumb canvas {
-    display:block;
-    width:100%;
-    height:auto;
+    display: block;
+    width: 100%;
+    height: auto;
   }
 
   .thumb .label {
-    font-size:11px;
-    text-align:center;
-    padding:4px 2px;
-    color:var(--muted);
-    background:#f4f1ec;
-    border-top:1px solid var(--line);
+    font-size: 11px;
+    font-weight: 600;
+    text-align: center;
+    padding: 5px 2px;
+    color: var(--ok);
+    background: var(--ok-soft);
+    border-top: 1px solid var(--line);
   }
 
   .thumb.blank .label {
-    color:var(--warn);
-    font-weight:600;
+    color: var(--warn);
+    background: var(--warn-soft);
   }
 
   .thumb .src {
-    font-size:10px;
-    color:#999;
-    text-align:center;
+    font-size: 10px;
+    color: var(--muted-soft);
+    text-align: center;
+    padding: 3px 4px 5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   #summary {
-    font-size:14px;
-    margin:4px 0 14px;
+    font-size: 14px;
+    color: var(--muted);
+    margin: 2px 0 16px;
   }
 
   #summary b {
-    font-size:16px;
+    font-size: 16px;
+    color: var(--ink);
   }
 
   .footer-note {
-    font-size:12px;
-    color:var(--muted);
-    margin-top:8px;
-    line-height:1.5;
+    font-size: 12.5px;
+    color: var(--muted);
+    line-height: 1.6;
+    background: var(--line-soft);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    margin-top: 4px;
   }
 
+  .footer-note strong {
+    color: var(--ink);
+  }
+
+  .swatch {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    border-radius: 2px;
+    margin: 0 2px -1px 0;
+  }
+
+  .swatch.warn { background: var(--warn); }
+  .swatch.ok { background: var(--ok); }
+
   .actions {
-    display:flex;
-    gap:10px;
-    align-items:center;
-    flex-wrap:wrap;
-    margin-top:14px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 18px;
   }
 </style>
 </head>
@@ -232,7 +339,7 @@
 
   <div class="card">
 
-    <h2>1. Kies de PDF-bestanden</h2>
+    <h2><span class="step-num">1</span> Kies de PDF-bestanden</h2>
 
     <div class="instructions">
       Kies hieronder alle PDF-bestanden die je wilt samenvoegen.
@@ -256,14 +363,14 @@
 
   <div class="card" id="resultsCard" style="display:none">
 
-    <h2>2. Controleer de pagina's</h2>
+    <h2><span class="step-num">2</span> Controleer de pagina's</h2>
 
     <div id="summary"></div>
 
     <div class="footer-note">
-      Pagina's met een <strong>rode rand</strong> zijn automatisch als vermoedelijk leeg herkend
+      Pagina's met een <span class="swatch warn"></span><strong>rode rand</strong> zijn automatisch als vermoedelijk leeg herkend
       en worden standaard uitgesloten.
-      Pagina's met een <strong>groene rand</strong> worden behouden.
+      Pagina's met een <span class="swatch ok"></span><strong>groene rand</strong> worden behouden.
       <br><br>
       Klik op een pagina om deze in of uit te sluiten.
       Controleer de selectie voordat je de definitieve PDF maakt.
