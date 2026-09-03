@@ -306,6 +306,57 @@
     flex-wrap: wrap;
     margin-top: 18px;
   }
+
+  .filename-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 20px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line-soft);
+  }
+
+  .filename-row label {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ink);
+    flex-shrink: 0;
+  }
+
+  .filename-field {
+    display: flex;
+    align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    padding: 0 12px;
+    max-width: 360px;
+    width: 100%;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .filename-field:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-ring);
+  }
+
+  .filename-field input {
+    border: none;
+    outline: none;
+    font-size: 13.5px;
+    padding: 9px 0;
+    flex: 1;
+    min-width: 0;
+    color: var(--ink);
+    background: transparent;
+  }
+
+  .filename-field .ext {
+    font-size: 13.5px;
+    color: var(--muted-soft);
+    white-space: nowrap;
+    padding-left: 2px;
+  }
 </style>
 </head>
 
@@ -378,6 +429,14 @@
 
     <div class="grid" id="grid"></div>
 
+    <div class="filename-row">
+      <label for="filenameInput">Bestandsnaam</label>
+      <div class="filename-field">
+        <input type="text" id="filenameInput" value="samengevoegd_opgeschoond" spellcheck="false">
+        <span class="ext">.pdf</span>
+      </div>
+    </div>
+
     <div class="actions" style="margin-top:20px">
       <button id="mergeBtn">
         Geselecteerde pagina's samenvoegen &amp; downloaden
@@ -411,6 +470,28 @@ const gridEl = document.getElementById("grid");
 const summaryEl = document.getElementById("summary");
 const mergeBtn = document.getElementById("mergeBtn");
 const mergeStatus = document.getElementById("mergeStatus");
+const filenameInput = document.getElementById("filenameInput");
+
+function getOutputFilename() {
+
+  let name = filenameInput.value.trim();
+
+  if (!name) {
+    name = "samengevoegd_opgeschoond";
+  }
+
+  // Verwijder tekens die niet geschikt zijn voor bestandsnamen
+  // en een eventuele .pdf-extensie die de gebruiker zelf al typte.
+
+  name = name.replace(/\.pdf$/i, "");
+  name = name.replace(/[\\/:*?"<>|]/g, "");
+
+  if (!name) {
+    name = "samengevoegd_opgeschoond";
+  }
+
+  return name + ".pdf";
+}
 
 fileInput.addEventListener("change", () => {
   selectedFiles = Array.from(fileInput.files).map(f => ({ file: f }));
@@ -700,13 +781,14 @@ mergeBtn.addEventListener("click", async () => {
     a.href =
       URL.createObjectURL(blob);
 
-    a.download =
-      "samengevoegd_opgeschoond.pdf";
+    const outName = getOutputFilename();
+
+    a.download = outName;
 
     a.click();
 
     mergeStatus.textContent =
-      `Klaar — samengevoegd_opgeschoond.pdf gedownload (${toKeep.length} pagina's).`;
+      `Klaar — ${outName} gedownload (${toKeep.length} pagina's).`;
 
   } catch (e) {
 
