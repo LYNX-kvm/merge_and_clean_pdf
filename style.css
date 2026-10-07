@@ -1,0 +1,171 @@
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f6f5f2;
+  color: #1c1b1a;
+  padding: 30px;
+}
+
+.wrap {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+h1 {
+  font-size: 24px;
+}
+
+.sub {
+  color: #767066;
+  font-size: 14px;
+}
+
+.card {
+  background-color: white;
+  border: 1px solid #e8e4dc;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.card h2 {
+  font-size: 16px;
+  margin-top: 0;
+}
+
+.card p,
+.card li {
+  color: #767066;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.note {
+  background-color: #f0ede6;
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 13px;
+  color: #767066;
+}
+
+button {
+  background-color: #d94f8c;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #c23e79;
+}
+
+button:disabled {
+  background-color: #e8e4dc;
+  color: #9c968b;
+  cursor: default;
+}
+
+button.small {
+  background-color: white;
+  color: #c23e79;
+  border: 1px solid #e8e4dc;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+#fileList {
+  list-style: none;
+  padding: 0;
+}
+
+#fileList li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0ede6;
+}
+
+#fileList .name {
+  flex: 1;
+}
+
+#progress,
+#mergeStatus {
+  font-size: 13px;
+  color: #767066;
+}
+
+#grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.thumb {
+  border: 2px solid #e8e4dc;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.thumb canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.thumb.kept {
+  border-color: #2f8f5b;
+}
+
+.thumb.blank {
+  border-color: #c2483a;
+  background-color: #fbeae7;
+}
+
+.thumb.blank canvas {
+  opacity: 0.5;
+}
+
+.label {
+  font-size: 11px;
+  font-weight: bold;
+  text-align: center;
+  padding: 4px;
+}
+
+.thumb.kept .label {
+  color: #2f8f5b;
+  background-color: #e7f5ec;
+}
+
+.thumb.blank .label {
+  color: #c2483a;
+  background-color: #fbeae7;
+}
+
+.src {
+  font-size: 10px;
+  color: #9c968b;
+  text-align: center;
+  padding: 3px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.filename-row {
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.filename-row input {
+  padding: 8px;
+  border: 1px solid #e8e4dc;
+  border-radius: 6px;
+  width: 250px;
+}
